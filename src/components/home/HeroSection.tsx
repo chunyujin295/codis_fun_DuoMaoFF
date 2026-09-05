@@ -2,7 +2,8 @@
 
 import { motion } from 'framer-motion'
 import Link from 'next/link'
-import { Cat, ArrowRight } from 'lucide-react'
+import Image from 'next/image'
+import { ArrowRight } from 'lucide-react'
 
 export function HeroSection() {
   return (
@@ -40,9 +41,16 @@ export function HeroSection() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
         >
-          <Cat className="w-20 h-20 mx-auto mb-6 text-primary-500" />
+          <Image
+            src="/DuoMaoFF/doc/img/icon.png"
+            alt="多毛记 Logo"
+            width={80}
+            height={80}
+            className="mx-auto mb-6"
+            priority
+          />
           <h1 className="text-5xl md:text-7xl font-serif font-bold mb-6">
-            <span className="gradient-text">双猫记</span>
+            <span className="gradient-text">多毛记</span>
           </h1>
           <p className="text-xl md:text-2xl text-gray-600 mb-8 font-light">
             记录<span className="font-semibold text-primary-500">多多</span>和

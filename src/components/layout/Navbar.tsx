@@ -1,9 +1,10 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
-import { Menu, X, Cat } from 'lucide-react'
+import { Menu, X } from 'lucide-react'
 
 const navItems = [
   { href: '/', label: '首页' },
@@ -28,8 +29,15 @@ export function Navbar() {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 group">
-            <Cat className="w-8 h-8 text-primary-500 group-hover:rotate-12 transition-transform" />
-            <span className="text-xl font-serif font-bold gradient-text">双猫记</span>
+            <Image
+              src="/DuoMaoFF/doc/img/icon.png"
+              alt="多毛记 Logo"
+              width={32}
+              height={32}
+              className="transition-transform group-hover:rotate-12"
+              priority
+            />
+            <span className="text-xl font-serif font-bold gradient-text">多毛记</span>
           </Link>
 
           {/* Desktop Navigation */}

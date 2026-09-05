@@ -2,9 +2,10 @@
 
 import { useState } from 'react'
 import { motion } from 'framer-motion'
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { signIn } from 'next-auth/react'
-import { Cat, Lock, User } from 'lucide-react'
+import { Lock, User } from 'lucide-react'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -53,10 +54,16 @@ export default function LoginPage() {
               transition={{ type: 'spring', stiffness: 300 }}
               className="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-primary-100 to-secondary-100 rounded-full flex items-center justify-center"
             >
-              <Cat className="w-10 h-10 text-primary-500" />
+              <Image
+                src="/DuoMaoFF/doc/img/icon.png"
+                alt="多毛记 Logo"
+                width={48}
+                height={48}
+                priority
+              />
             </motion.div>
             <h1 className="text-2xl font-serif font-bold">管理员登录</h1>
-            <p className="text-gray-500 text-sm mt-2">双猫记管理后台</p>
+            <p className="text-gray-500 text-sm mt-2">多毛记管理后台</p>
           </div>
 
           {/* Form */}

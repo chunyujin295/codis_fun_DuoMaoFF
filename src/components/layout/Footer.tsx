@@ -1,8 +1,9 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
-import { Cat, Heart } from 'lucide-react'
+import { Heart } from 'lucide-react'
 
 export function Footer() {
   const pathname = usePathname()
@@ -19,8 +20,13 @@ export function Footer() {
           {/* Brand */}
           <div>
             <Link href="/" className="flex items-center gap-2 mb-4">
-              <Cat className="w-6 h-6 text-primary-500" />
-              <span className="text-lg font-serif font-bold gradient-text">双猫记</span>
+              <Image
+                src="/DuoMaoFF/doc/img/icon.png"
+                alt="多毛记 Logo"
+                width={24}
+                height={24}
+              />
+              <span className="text-lg font-serif font-bold gradient-text">多毛记</span>
             </Link>
             <p className="text-gray-500 text-sm">
               记录多多和毛毛的每一个美好瞬间
@@ -69,7 +75,7 @@ export function Footer() {
         </div>
 
         <div className="mt-8 pt-8 border-t border-gray-100 text-center text-sm text-gray-400">
-          <p>© {new Date().getFullYear()} 双猫记. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} 多毛记. All rights reserved.</p>
         </div>
       </div>
     </footer>

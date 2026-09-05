@@ -1,4 +1,8 @@
-# 双猫记 (DuoMaoFF)
+# 多毛记 (DuoMaoFF)
+
+<p align="center">
+  <img src="./doc/img/icon.png" alt="icon" width="200">
+</p>
 
 一个杂志风格的猫咪展示网站，用于展示多多和毛毛两只小猫的照片、视频和成长故事。
 

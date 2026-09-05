@@ -1,8 +1,9 @@
 'use client'
 
 import Link from 'next/link'
+import NextImage from 'next/image'
 import { usePathname } from 'next/navigation'
-import { Cat, LayoutDashboard, Image, BookOpen, LogOut } from 'lucide-react'
+import { LayoutDashboard, Image, BookOpen, LogOut } from 'lucide-react'
 import { signOut } from 'next-auth/react'
 
 const sidebarItems = [
@@ -30,7 +31,13 @@ export default function AdminLayout({
         <div className="flex flex-col h-full">
           {/* Logo */}
           <div className="flex items-center gap-2 px-6 py-5 border-b border-gray-100">
-            <Cat className="w-8 h-8 text-primary-500" />
+            <NextImage
+              src="/DuoMaoFF/doc/img/icon.png"
+              alt="多毛记 Logo"
+              width={32}
+              height={32}
+              priority
+            />
             <span className="text-xl font-serif font-bold gradient-text">管理后台</span>
           </div>
 

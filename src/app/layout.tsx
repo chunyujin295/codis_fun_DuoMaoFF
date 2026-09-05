@@ -4,8 +4,12 @@ import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
 
 export const metadata: Metadata = {
-  title: '双猫记 - 多多和毛毛的故事',
+  title: '多毛记 - 多多和毛毛的故事',
   description: '记录两只可爱小猫多多和毛毛的日常点滴',
+  icons: {
+    icon: '/DuoMaoFF/doc/img/icon.png',
+    apple: '/DuoMaoFF/doc/img/icon.png',
+  },
 }
 
 export default function RootLayout({
