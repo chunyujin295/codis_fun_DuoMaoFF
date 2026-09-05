@@ -3,12 +3,10 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import Image from 'next/image'
-import { useRouter } from 'next/navigation'
 import { signIn } from 'next-auth/react'
 import { Lock, User } from 'lucide-react'
 
 export default function LoginPage() {
-  const router = useRouter()
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -29,7 +27,7 @@ export default function LoginPage() {
       if (result?.error) {
         setError('用户名或密码错误')
       } else {
-        router.push('/admin')
+        window.location.href = '/DuoMaoFF/admin'
       }
     } catch (err) {
       setError('登录失败，请重试')

@@ -56,7 +56,7 @@ export default function AdminDashboard() {
       value: stats.catCount,
       icon: Cat,
       color: 'accent',
-      href: '/admin',
+      href: '/admin/cats',
     },
   ]
 

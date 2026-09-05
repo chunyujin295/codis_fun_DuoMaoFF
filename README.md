@@ -14,9 +14,10 @@
 
 - **猫咪介绍** - 展示每只猫的个人信息与性格特点
 - **媒体相册** - 照片/视频的瀑布流展示，支持灯箱查看
+- **视频缩略图** - 上传视频自动生成预览帧
 - **时间线** - 根据 EXIF 日期自动组织的成长时间线
 - **小猫日记** - 记录猫咪的日常趣事和成长点滴
-- **管理后台** - 登录后上传和管理媒体内容
+- **管理后台** - 登录后上传和管理媒体内容、编辑猫咪资料
 
 ## 技术栈
 
@@ -29,6 +30,7 @@
 
 - Node.js >= 18
 - npm >= 9
+- ffmpeg（视频缩略图生成）
 - Docker & Docker Compose（可选）
 
 ## 快速开始
@@ -82,23 +84,56 @@ npm run dev
 
 ## Docker 部署
 
+### 首次部署
+
 ```bash
-docker compose up -d
+# 1. 配置环境变量
+cp .env.example .env
+# 编辑 .env，设置 NEXTAUTH_URL、NEXTAUTH_SECRET、ADMIN_PASSWORD 等
+
+# 2. 初始化数据库（仅首次执行）
+docker compose --profile setup run --rm init
+
+# 3. 启动服务
+docker compose up -d --build
 ```
 
-容器启动后访问 http://localhost:3000。
+### 日常更新
 
-停止服务：
+```bash
+# 拉取最新代码后，重新构建并启动
+docker compose up -d --build
+```
+
+### 重启服务（不重新构建）
+
+```bash
+docker compose restart web
+```
+
+### 查看日志
+
+```bash
+docker compose logs -f web
+```
+
+### 停止服务
 
 ```bash
 docker compose down
 ```
 
+> **注意**：`docker compose down -v` 会删除数据卷（数据库和上传文件），请勿使用。
+
 ## 管理后台
 
-访问 http://localhost:3000/admin/login 进行登录。
+访问 `/admin/login` 进行登录。
 
-默认账号：`admin` / `admin123`
+功能模块：
+- **仪表板** - 数据统计与快捷操作
+- **媒体管理** - 上传、删除照片/视频，支持批量上传
+- **日记管理** - 编写、编辑、删除猫咪日记
+- **猫咪管理** - 编辑猫咪资料（名字、毛色、性格、介绍、头像等）
 
 > 生产环境部署前请务必修改管理员密码和 `NEXTAUTH_SECRET`。
 
@@ -127,11 +162,23 @@ DuoMaoFF/
 
 ## 常用命令
 
+### 本地开发
+
 | 命令 | 说明 |
 |------|------|
 | `npm run dev` | 启动开发服务器 |
 | `npm run build` | 构建生产版本 |
 | `npm run start` | 启动生产服务器 |
 | `npm run lint` | 代码检查 |
+| `npm run setup` | 初始化数据库（仅首次） |
 | `npm run db:studio` | 打开 Prisma 数据库管理界面 |
-| `npm run db:seed` | 重新导入种子数据 |
+
+### Docker
+
+| 命令 | 说明 |
+|------|------|
+| `docker compose up -d --build` | 构建并启动服务 |
+| `docker compose restart web` | 重启服务（不重建） |
+| `docker compose logs -f web` | 查看实时日志 |
+| `docker compose down` | 停止服务 |
+| `docker compose --profile setup run --rm init` | 初始化数据库（仅首次） |

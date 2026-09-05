@@ -48,7 +48,10 @@ export function HeroSection({ media = [] }: { media?: AlbumMedia[] }) {
               <CatPortrait variant={1} name="毛毛" />
             )}
             <p>
-              {photos[1]?.description || '毛毛 / 慢一点也没关系'}{' '}
+              {photos[1]?.description ||
+                (photos[1]?.cat
+                  ? photos[1].cat.name + ' / 也是我的宝贝'
+                  : '毛毛 / 慢一点也没关系')}{' '}
               <span>02</span>
             </p>
           </div>
@@ -60,7 +63,10 @@ export function HeroSection({ media = [] }: { media?: AlbumMedia[] }) {
               <CatPortrait name="多多" />
             )}
             <p>
-              {photos[0]?.description || '多多 / 今天也有好好晒太阳'}{' '}
+              {photos[0]?.description ||
+                (photos[0]?.cat
+                  ? photos[0].cat.name + ' / 今天也有好好晒太阳'
+                  : '多多 / 今天也有好好晒太阳')}{' '}
               <span>01</span>
             </p>
           </div>

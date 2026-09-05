@@ -3,13 +3,20 @@
 import Link from 'next/link'
 import NextImage from 'next/image'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Image, BookOpen, LogOut } from 'lucide-react'
+import {
+  LayoutDashboard,
+  Image,
+  BookOpen,
+  Cat,
+  LogOut,
+} from 'lucide-react'
 import { signOut } from 'next-auth/react'
 
 const sidebarItems = [
   { href: '/admin', label: '仪表板', icon: LayoutDashboard },
   { href: '/admin/media', label: '媒体管理', icon: Image },
   { href: '/admin/diary', label: '日记管理', icon: BookOpen },
+  { href: '/admin/cats', label: '猫咪管理', icon: Cat },
 ]
 
 export default function AdminLayout({

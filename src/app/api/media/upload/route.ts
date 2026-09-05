@@ -2,12 +2,16 @@ import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { randomUUID } from 'crypto'
 import { mkdir, open, rename, unlink } from 'fs/promises'
+import { execFile } from 'child_process'
+import { promisify } from 'util'
 import path from 'path'
 import sharp from 'sharp'
 import { prisma } from '@/lib/db'
 import { authOptions } from '@/lib/auth'
 import { extractExifData } from '@/lib/exif'
 import { mediaTypes, storedFilePath, uploadDirectory } from '@/lib/storage'
+
+const execFileAsync = promisify(execFile)
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -168,6 +172,27 @@ export async function POST(request: Request) {
     }
     await rename(temporaryPath, finalPath)
     createdPaths.push(finalPath)
+    if (format.type === 'video') {
+      const thumbnailName = filename + '.thumb.webp'
+      const thumbnailFile = storedFilePath(thumbnailName)
+      try {
+        const tmpFrame = storedFilePath(filename + '.frame.jpg')
+        await execFileAsync('ffmpeg', [
+          '-y', '-i', finalPath,
+          '-ss', '1', '-vframes', '1',
+          '-vf', 'scale=960:-1',
+          tmpFrame,
+        ], { timeout: 30000 })
+        await sharp(tmpFrame, { limitInputPixels: 80000000 })
+          .webp({ quality: 80 })
+          .toFile(thumbnailFile)
+        thumbnailPath = '/uploads/' + thumbnailName
+      } catch {
+        console.warn('Video thumbnail generation failed for', filename)
+      } finally {
+        await unlink(storedFilePath(filename + '.frame.jpg')).catch(() => {})
+      }
+    }
     const exif = format.type === 'image' ? await extractExifData(finalPath) : {}
     const media = await prisma.media.create({
       data: {

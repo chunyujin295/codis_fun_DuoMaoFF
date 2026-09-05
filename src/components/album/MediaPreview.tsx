@@ -35,14 +35,34 @@ export function MediaPreview({
   if (item.type === 'video')
     return (
       <div className={'video-preview ' + className}>
-        <video
-          src={siteUrl(item.filePath)}
-          controls={full}
-          playsInline
-          preload={full ? 'metadata' : 'none'}
-          onError={() => setFailed(true)}
-          className={full ? 'media-full' : 'media-cover'}
-        />
+        {full ? (
+          <video
+            src={siteUrl(item.filePath)}
+            controls
+            playsInline
+            preload="metadata"
+            onError={() => setFailed(true)}
+            className="media-full"
+          />
+        ) : item.thumbnailPath ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={siteUrl(item.thumbnailPath)}
+            alt={item.description || item.originalName || '视频预览'}
+            loading="lazy"
+            decoding="async"
+            onError={() => setFailed(true)}
+            className="media-cover"
+          />
+        ) : (
+          <video
+            src={siteUrl(item.filePath)}
+            playsInline
+            preload="none"
+            onError={() => setFailed(true)}
+            className="media-cover"
+          />
+        )}
         {!full && (
           <span className="video-label">
             <Play size={22} fill="currentColor" />
