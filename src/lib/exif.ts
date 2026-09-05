@@ -1,5 +1,5 @@
 import ExifReader from 'exif-reader'
-import fs from 'fs'
+import sharp from 'sharp'
 
 export interface ExifResult {
   dateTaken?: Date
@@ -8,8 +8,9 @@ export interface ExifResult {
 
 export async function extractExifData(filePath: string): Promise<ExifResult> {
   try {
-    const buffer = fs.readFileSync(filePath)
-    const exifData = ExifReader(buffer)
+    const metadata = await sharp(filePath).metadata()
+    if (!metadata.exif) return {}
+    const exifData = ExifReader(metadata.exif)
 
     let dateTaken: Date | undefined
 
@@ -21,7 +22,8 @@ export async function extractExifData(filePath: string): Promise<ExifResult> {
     }
 
     return {
-      dateTaken,
+      dateTaken:
+        dateTaken && !Number.isNaN(dateTaken.getTime()) ? dateTaken : undefined,
       data: exifData as unknown as Record<string, any>,
     }
   } catch (error) {

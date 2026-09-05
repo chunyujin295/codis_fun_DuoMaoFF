@@ -1,5 +1,9 @@
 'use client'
 
+import { apiFetch, siteUrl } from '@/lib/urls'
+import { CatPortrait } from '@/components/album/CatPortrait'
+import { MediaPreview } from '@/components/album/MediaPreview'
+
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
@@ -23,7 +27,7 @@ export default function CatsPage() {
   const [cats, setCats] = useState<CatData[]>([])
 
   useEffect(() => {
-    fetch('/api/cats')
+    apiFetch('/api/cats')
       .then((res) => res.json())
       .then((data) => {
         if (data.success) setCats(data.data)
@@ -36,14 +40,18 @@ export default function CatsPage() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-16"
+          className="collection-heading"
         >
-          <h1 className="text-4xl md:text-5xl font-serif font-bold mb-4">
-            认识我们的小天使
-          </h1>
-          <p className="text-gray-500 text-lg max-w-2xl mx-auto">
-            两只性格迥异却同样可爱的小猫，用它们的方式温暖着我们的生活
-          </p>
+          <div>
+            <span className="eyebrow">THE RESIDENTS / 本册主角</span>
+            <h1 className="text-4xl md:text-5xl font-serif font-bold mb-4">
+              家里的两位大人物
+            </h1>
+            <p className="text-gray-500 text-lg max-w-2xl mx-auto">
+              多多和毛毛。各有各的脾气，一样被认真爱着。
+            </p>
+          </div>
+          <span className="handwritten">可爱，各有各的道理。</span>
         </motion.div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
@@ -59,12 +67,17 @@ export default function CatsPage() {
                   {/* Avatar section */}
                   <div className="relative h-80 bg-gradient-to-br from-primary-100 via-secondary-50 to-accent-100 flex items-center justify-center overflow-hidden">
                     <motion.div
+                      className="w-full h-full"
                       whileHover={{ scale: 1.1, rotate: 5 }}
                       transition={{ type: 'spring', stiffness: 300 }}
                     >
-                      <Cat className="w-40 h-40 text-primary-300" />
+                      <CatPortrait
+                        name={cat.name}
+                        variant={index}
+                        avatar={cat.avatar}
+                      />
                     </motion.div>
-                    
+
                     {/* Floating decorations */}
                     <motion.div
                       className="absolute top-8 right-8"
@@ -85,7 +98,9 @@ export default function CatsPage() {
                   {/* Info section */}
                   <div className="p-8">
                     <div className="flex items-center gap-3 mb-4">
-                      <h2 className="text-3xl font-serif font-bold">{cat.name}</h2>
+                      <h2 className="text-3xl font-serif font-bold">
+                        {cat.name}
+                      </h2>
                       {cat.color && (
                         <span className="px-4 py-1 bg-gradient-to-r from-primary-50 to-secondary-50 text-primary-600 text-sm rounded-full border border-primary-100">
                           {cat.color}
@@ -102,7 +117,8 @@ export default function CatsPage() {
 
                     {cat.birthday && (
                       <p className="text-sm text-gray-400 mb-4">
-                        生日: {new Date(cat.birthday).toLocaleDateString('zh-CN')}
+                        生日:{' '}
+                        {new Date(cat.birthday).toLocaleDateString('zh-CN')}
                       </p>
                     )}
 
@@ -114,18 +130,24 @@ export default function CatsPage() {
 
                     <div className="flex items-center gap-6 text-sm text-gray-400">
                       <div className="flex items-center gap-1">
-                        <span className="font-semibold text-gray-700">{cat._count?.media || 0}</span>
+                        <span className="font-semibold text-gray-700">
+                          {cat._count?.media || 0}
+                        </span>
                         <span>张照片</span>
                       </div>
                       <div className="flex items-center gap-1">
-                        <span className="font-semibold text-gray-700">{cat._count?.diary || 0}</span>
+                        <span className="font-semibold text-gray-700">
+                          {cat._count?.diary || 0}
+                        </span>
                         <span>篇日记</span>
                       </div>
                     </div>
 
                     <div className="mt-6 flex items-center text-primary-500 font-medium group-hover:gap-3 gap-2 transition-all">
                       <span>查看详细资料</span>
-                      <span className="group-hover:translate-x-2 transition-transform">→</span>
+                      <span className="group-hover:translate-x-2 transition-transform">
+                        →
+                      </span>
                     </div>
                   </div>
                 </div>

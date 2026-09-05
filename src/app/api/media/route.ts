@@ -6,8 +6,17 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url)
     const catId = searchParams.get('catId')
     const type = searchParams.get('type')
-    const page = parseInt(searchParams.get('page') || '1')
-    const pageSize = parseInt(searchParams.get('pageSize') || '20')
+    const page = Math.max(1, Number(searchParams.get('page')) || 1)
+    const pageSize = Math.min(
+      100,
+      Math.max(1, Number(searchParams.get('pageSize')) || 24)
+    )
+    if (!Number.isSafeInteger(page) || !Number.isSafeInteger(pageSize)) {
+      return NextResponse.json(
+        { success: false, error: '分页参数无效' },
+        { status: 400 }
+      )
+    }
 
     const where: any = {}
     if (catId) where.catId = catId
@@ -17,7 +26,7 @@ export async function GET(request: Request) {
       prisma.media.findMany({
         where,
         include: { cat: true },
-        orderBy: { dateTaken: 'desc' },
+        orderBy: [{ dateTaken: 'desc' }, { id: 'desc' }],
         skip: (page - 1) * pageSize,
         take: pageSize,
       }),
@@ -35,6 +44,9 @@ export async function GET(request: Request) {
       },
     })
   } catch (error) {
-    return NextResponse.json({ success: false, error: 'Failed to fetch media' }, { status: 500 })
+    return NextResponse.json(
+      { success: false, error: 'Failed to fetch media' },
+      { status: 500 }
+    )
   }
 }

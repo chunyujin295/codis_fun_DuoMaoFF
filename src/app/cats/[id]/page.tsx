@@ -1,9 +1,21 @@
 'use client'
 
+import { apiFetch } from '@/lib/urls'
+import { CatPortrait } from '@/components/album/CatPortrait'
+import { MediaPreview } from '@/components/album/MediaPreview'
+
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
-import { Cat, ArrowLeft, Sparkles, Calendar, Palette, Image, BookOpen } from 'lucide-react'
+import {
+  Cat,
+  ArrowLeft,
+  Sparkles,
+  Calendar,
+  Palette,
+  Image as ImageIcon,
+  BookOpen,
+} from 'lucide-react'
 
 interface CatDetail {
   id: string
@@ -38,7 +50,7 @@ export default function CatDetailPage({ params }: { params: { id: string } }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetch(`/api/cats/${params.id}`)
+    apiFetch(`/api/cats/${params.id}`)
       .then((res) => res.json())
       .then((data) => {
         if (data.success) setCat(data.data)
@@ -96,13 +108,18 @@ export default function CatDetailPage({ params }: { params: { id: string } }) {
           >
             <div className="aspect-square bg-gradient-to-br from-primary-100 via-secondary-50 to-accent-100 rounded-3xl flex items-center justify-center shadow-2xl overflow-hidden">
               <motion.div
+                className="w-full h-full"
                 whileHover={{ scale: 1.05 }}
                 transition={{ type: 'spring', stiffness: 300 }}
               >
-                <Cat className="w-48 h-48 text-primary-300" />
+                <CatPortrait
+                  name={cat.name}
+                  variant={cat.name === '毛毛' ? 1 : 0}
+                  avatar={cat.avatar}
+                />
               </motion.div>
             </div>
-            
+
             {/* Floating badge */}
             <motion.div
               className="absolute -bottom-4 -right-4 bg-white px-6 py-3 rounded-full shadow-lg"
@@ -121,7 +138,9 @@ export default function CatDetailPage({ params }: { params: { id: string } }) {
             transition={{ delay: 0.2 }}
           >
             <div className="flex items-center gap-3 mb-4">
-              <h1 className="text-4xl md:text-5xl font-serif font-bold">{cat.name}</h1>
+              <h1 className="text-4xl md:text-5xl font-serif font-bold">
+                {cat.name}
+              </h1>
               {cat.color && (
                 <span className="px-4 py-1 bg-gradient-to-r from-primary-50 to-secondary-50 text-primary-600 text-sm rounded-full border border-primary-100">
                   {cat.color}
@@ -140,7 +159,14 @@ export default function CatDetailPage({ params }: { params: { id: string } }) {
               {cat.birthday && (
                 <div className="flex items-center gap-3 text-gray-600">
                   <Calendar className="w-5 h-5 text-primary-400" />
-                  <span>生日: {new Date(cat.birthday).toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                  <span>
+                    生日:{' '}
+                    {new Date(cat.birthday).toLocaleDateString('zh-CN', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                    })}
+                  </span>
                 </div>
               )}
               {cat.color && (
@@ -150,7 +176,7 @@ export default function CatDetailPage({ params }: { params: { id: string } }) {
                 </div>
               )}
               <div className="flex items-center gap-3 text-gray-600">
-                <Image className="w-5 h-5 text-accent-400" />
+                <ImageIcon className="w-5 h-5 text-accent-400" />
                 <span>{cat._count?.media || 0} 张照片</span>
               </div>
               <div className="flex items-center gap-3 text-gray-600">
@@ -161,8 +187,12 @@ export default function CatDetailPage({ params }: { params: { id: string } }) {
 
             {cat.description && (
               <div className="bg-white rounded-2xl p-6 shadow-md">
-                <h3 className="font-serif font-semibold text-lg mb-3">关于 {cat.name}</h3>
-                <p className="text-gray-600 leading-relaxed">{cat.description}</p>
+                <h3 className="font-serif font-semibold text-lg mb-3">
+                  关于 {cat.name}
+                </h3>
+                <p className="text-gray-600 leading-relaxed">
+                  {cat.description}
+                </p>
               </div>
             )}
           </motion.div>
@@ -182,7 +212,7 @@ export default function CatDetailPage({ params }: { params: { id: string } }) {
                 transition={{ delay: index * 0.1 }}
                 className="aspect-square bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl flex items-center justify-center"
               >
-                <Image className="w-8 h-8 text-gray-400" />
+                <MediaPreview item={item} full={item.type === 'video'} />
               </motion.div>
             ))}
           </div>
@@ -215,9 +245,13 @@ export default function CatDetailPage({ params }: { params: { id: string } }) {
                   <div className="bg-white rounded-2xl p-6 shadow-md card-hover h-full">
                     <div className="flex items-start justify-between mb-3">
                       <h3 className="font-serif font-semibold">{item.title}</h3>
-                      {item.mood && <span className="text-xl">{item.mood}</span>}
+                      {item.mood && (
+                        <span className="text-xl">{item.mood}</span>
+                      )}
                     </div>
-                    <p className="text-gray-600 text-sm line-clamp-3 mb-3">{item.content}</p>
+                    <p className="text-gray-600 text-sm line-clamp-3 mb-3">
+                      {item.content}
+                    </p>
                     <p className="text-xs text-gray-400">
                       {new Date(item.createdAt).toLocaleDateString('zh-CN')}
                     </p>

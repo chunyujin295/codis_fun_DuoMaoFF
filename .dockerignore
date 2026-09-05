@@ -1,5 +1,11 @@
 node_modules
 .next
+.npm-cache
+.test-data
+backups
+uploads
+prisma/*.db
+prisma/*.db-*
 .git
 .gitignore
 .env

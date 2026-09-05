@@ -24,7 +24,10 @@ export const authOptions: NextAuthOptions = {
           return null
         }
 
-        const isValid = await bcrypt.compare(credentials.password, user.password)
+        const isValid = await bcrypt.compare(
+          credentials.password,
+          user.password
+        )
 
         if (!isValid) {
           return null
@@ -41,7 +44,7 @@ export const authOptions: NextAuthOptions = {
     strategy: 'jwt',
   },
   pages: {
-    signIn: '/admin/login',
+    signIn: '/DuoMaoFF/admin/login',
   },
   callbacks: {
     async jwt({ token, user }) {
@@ -52,7 +55,7 @@ export const authOptions: NextAuthOptions = {
     },
     async session({ session, token }) {
       if (session.user) {
-        (session.user as any).id = token.id
+        ;(session.user as any).id = token.id
       }
       return session
     },

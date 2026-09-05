@@ -1,269 +1,409 @@
 'use client'
-
 import { useEffect, useState, useRef } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { Image, Video, Upload, Trash2, X, Check } from 'lucide-react'
-
-interface MediaItem {
-  id: string
-  filename: string
-  originalName: string
-  filePath: string
-  type: 'image' | 'video'
-  description?: string | null
-  catId?: string | null
-  cat?: { name: string } | null
-  createdAt: string
+import { Upload, Trash2, X, Check, AlertCircle } from 'lucide-react'
+import { apiFetch, siteUrl } from '@/lib/urls'
+import { MediaPreview, AlbumMedia } from '@/components/album/MediaPreview'
+import { Lightbox } from '@/components/gallery/Lightbox'
+interface UploadResult {
+  name: string
+  success: boolean
+  message: string
 }
-
 interface Cat {
   id: string
   name: string
 }
-
 export default function MediaManagementPage() {
-  const [media, setMedia] = useState<MediaItem[]>([])
+  const [media, setMedia] = useState<AlbumMedia[]>([])
   const [cats, setCats] = useState<Cat[]>([])
+  const [page, setPage] = useState(1)
+  const [pages, setPages] = useState(0)
+  const [total, setTotal] = useState(0)
+  const [refresh, setRefresh] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
   const [uploading, setUploading] = useState(false)
-  const [selectedCat, setSelectedCat] = useState<string>('')
+  const [progress, setProgress] = useState(0)
+  const [currentFile, setCurrentFile] = useState('')
+  const [results, setResults] = useState<UploadResult[]>([])
+  const [selectedCat, setSelectedCat] = useState('')
   const [description, setDescription] = useState('')
-  const [showUploadModal, setShowUploadModal] = useState(false)
-  const [dragActive, setDragActive] = useState(false)
-  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [showUpload, setShowUpload] = useState(false)
+  const [dragging, setDragging] = useState(false)
+  const [maxFileSize, setMaxFileSize] = useState(52428800)
+  const [index, setIndex] = useState<number | null>(null)
+  const input = useRef<HTMLInputElement>(null)
+  const uploadLock = useRef(false)
 
   useEffect(() => {
-    Promise.all([
-      fetch('/api/media?pageSize=100').then((res) => res.json()),
-      fetch('/api/cats').then((res) => res.json()),
-    ]).then(([mediaRes, catsRes]) => {
-      if (mediaRes.success) setMedia(mediaRes.data.items)
-      if (catsRes.success) setCats(catsRes.data)
-      setLoading(false)
-    })
+    apiFetch('/api/cats')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) setCats(data.data)
+      })
+      .catch(() => {})
+    apiFetch('/api/media/upload')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) setMaxFileSize(data.maxFileSize)
+      })
+      .catch(() => {})
   }, [])
+  useEffect(() => {
+    const controller = new AbortController()
+    setLoading(true)
+    setError('')
+    apiFetch('/api/media?pageSize=24&page=' + page, {
+      signal: controller.signal,
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (!data.success) throw new Error('读取失败')
+        setMedia(data.data.items)
+        setPages(data.data.totalPages)
+        setTotal(data.data.total)
+      })
+      .catch((error) => {
+        if (error.name !== 'AbortError')
+          setError('媒体列表读取失败，请刷新重试。')
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false)
+      })
+    return () => controller.abort()
+  }, [page, refresh])
+  useEffect(() => {
+    if (!uploading) return
+    const warn = (event: BeforeUnloadEvent) => {
+      event.preventDefault()
+      event.returnValue = ''
+    }
+    window.addEventListener('beforeunload', warn)
+    return () => window.removeEventListener('beforeunload', warn)
+  }, [uploading])
 
-  const handleUpload = async (files: FileList) => {
-    if (files.length === 0) return
-
-    setUploading(true)
-    for (const file of Array.from(files)) {
-      const formData = new FormData()
-      formData.append('file', file)
-      if (selectedCat) formData.append('catId', selectedCat)
-      if (description) formData.append('description', description)
-
-      try {
-        const res = await fetch('/api/media/upload', {
-          method: 'POST',
-          body: formData,
-        })
-        const data = await res.json()
-        if (data.success) {
-          setMedia((prev) => [data.data, ...prev])
+  function sendFile(file: File): Promise<AlbumMedia> {
+    return new Promise((resolve, reject) => {
+      const form = new FormData()
+      form.append('file', file)
+      if (selectedCat) form.append('catId', selectedCat)
+      if (description) form.append('description', description)
+      const xhr = new XMLHttpRequest()
+      xhr.open('POST', siteUrl('/api/media/upload'))
+      xhr.timeout = 30 * 60 * 1000
+      xhr.upload.onprogress = (event) => {
+        if (event.lengthComputable)
+          setProgress(Math.round((event.loaded / event.total) * 100))
+      }
+      xhr.onload = () => {
+        try {
+          const data = JSON.parse(xhr.responseText)
+          if (xhr.status >= 200 && xhr.status < 300 && data.success)
+            resolve(data.data)
+          else
+            reject(new Error(data.error || '保存失败，请重新登录或检查服务器'))
+        } catch {
+          reject(
+            new Error('服务器未返回有效结果，请检查代理上传大小和超时配置')
+          )
         }
-      } catch (error) {
-        console.error('Upload failed:', error)
       }
-    }
-    setUploading(false)
-    setShowUploadModal(false)
-    setSelectedCat('')
-    setDescription('')
+      xhr.onerror = () =>
+        reject(new Error('网络连接中断；结果未确认，请先刷新列表核对再重试'))
+      xhr.ontimeout = () =>
+        reject(new Error('上传超时；结果未确认，请先刷新列表核对再重试'))
+      xhr.send(form)
+    })
   }
-
-  const handleDelete = async (id: string) => {
-    if (!confirm('确定要删除这个文件吗？')) return
-
+  async function handleUpload(files: FileList | null) {
+    if (!files?.length || uploadLock.current) return
+    uploadLock.current = true
+    setUploading(true)
+    setResults([])
     try {
-      const res = await fetch(`/api/media/${id}`, { method: 'DELETE' })
-      if (res.ok) {
-        setMedia((prev) => prev.filter((item) => item.id !== id))
+      for (const file of Array.from(files)) {
+        setCurrentFile(file.name)
+        setProgress(0)
+        try {
+          if (file.size > maxFileSize)
+            throw new Error(
+              '超过单文件 ' + Math.round(maxFileSize / 1048576) + ' MB 上限'
+            )
+          if (!file.size) throw new Error('不能上传空文件')
+          await sendFile(file)
+          setResults((prev) => [
+            ...prev,
+            {
+              name: file.name,
+              success: true,
+              message: '原文件已保存，索引已登记',
+            },
+          ])
+        } catch (error) {
+          setResults((prev) => [
+            ...prev,
+            {
+              name: file.name,
+              success: false,
+              message: error instanceof Error ? error.message : '上传失败',
+            },
+          ])
+        }
       }
-    } catch (error) {
-      console.error('Delete failed:', error)
+    } finally {
+      uploadLock.current = false
+      setUploading(false)
+      setCurrentFile('')
+      setProgress(0)
+      setPage(1)
+      setRefresh((value) => value + 1)
+      if (input.current) input.current.value = ''
     }
   }
-
-  const handleDrag = (e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    if (e.type === 'dragenter' || e.type === 'dragover') {
-      setDragActive(true)
-    } else if (e.type === 'dragleave') {
-      setDragActive(false)
-    }
-  }
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setDragActive(false)
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      handleUpload(e.dataTransfer.files)
-    }
-  }
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
-        >
-          <Image className="w-8 h-8 text-primary-500" />
-        </motion.div>
-      </div>
+  async function remove(item: AlbumMedia) {
+    if (
+      !confirm(
+        '确定永久删除“' + (item.originalName || '这份影像') + '”及其原文件吗？'
+      )
     )
+      return
+    try {
+      const res = await apiFetch('/api/media/' + item.id, { method: 'DELETE' })
+      const data = await res.json()
+      if (!res.ok || !data.success) throw new Error(data.error || '删除失败')
+      if (media.length === 1 && page > 1) setPage(page - 1)
+      else setRefresh((value) => value + 1)
+    } catch (error) {
+      setError(error instanceof Error ? error.message : '删除失败，请重试')
+    }
   }
 
   return (
     <div>
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-        <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-serif font-bold">媒体管理</h1>
-          <button
-            onClick={() => setShowUploadModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-primary-500 text-white rounded-xl hover:bg-primary-600 transition-colors"
-          >
-            <Upload className="w-5 h-5" />
-            上传
+      <div className="section-heading">
+        <div>
+          <span className="eyebrow">ARCHIVE DESK / 收藏工作台</span>
+          <h2>把今天存下来。</h2>
+        </div>
+        <button
+          className="ink-button"
+          onClick={() => {
+            setShowUpload(true)
+            setResults([])
+          }}
+        >
+          <Upload size={16} />
+          上传影像
+        </button>
+      </div>
+      <p className="text-sm text-gray-500 mb-6">
+        已收藏 {total} 份影像。点击照片可查看原图或播放视频。
+      </p>
+      {error && (
+        <div role="alert" className="error-banner">
+          {error}{' '}
+          <button onClick={() => setRefresh((value) => value + 1)}>
+            重新读取 ↻
           </button>
         </div>
-
-        {/* Media grid */}
-        {media.length === 0 ? (
-          <div className="text-center py-20 bg-white rounded-2xl">
-            <Image className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-            <p className="text-gray-500">还没有上传任何媒体</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            {media.map((item) => (
-              <motion.div
-                key={item.id}
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="group relative bg-white rounded-xl overflow-hidden shadow-sm"
+      )}
+      {loading ? (
+        <div role="status" className="paper-empty">
+          正在打开收藏…
+        </div>
+      ) : media.length === 0 ? (
+        <div className="paper-empty">还没有影像，先收藏一张吧。</div>
+      ) : (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {media.map((item, i) => (
+            <div className="collection-card relative" key={item.id}>
+              <button
+                className="aspect-square block w-full overflow-hidden"
+                onClick={() => setIndex(i)}
+                aria-label={'预览' + item.originalName}
               >
-                <div className="aspect-square bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
-                  {item.type === 'video' ? (
-                    <Video className="w-8 h-8 text-gray-400" />
-                  ) : (
-                    <Image className="w-8 h-8 text-gray-400" />
-                  )}
-                </div>
-                <div className="p-2">
-                  <p className="text-xs text-gray-500 truncate">{item.originalName}</p>
-                  {item.cat && (
-                    <p className="text-xs text-primary-500">{item.cat.name}</p>
-                  )}
-                </div>
-                <button
-                  onClick={() => handleDelete(item.id)}
-                  className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </motion.div>
-            ))}
-          </div>
-        )}
-      </motion.div>
-
-      {/* Upload modal */}
-      <AnimatePresence>
-        {showUploadModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
-            onClick={() => setShowUploadModal(false)}
+                <MediaPreview item={item} />
+              </button>
+              <div className="p-2 pr-8">
+                <p className="text-xs truncate">{item.originalName}</p>
+                <small className="text-gray-500">
+                  {item.cat?.name || '未关联猫咪'}
+                </small>
+              </div>
+              <button
+                className="absolute bottom-3 right-2 p-2 text-red-700"
+                onClick={() => remove(item)}
+                aria-label={'删除' + item.originalName}
+              >
+                <Trash2 size={16} />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+      <div className="pagination">
+        <button
+          disabled={page <= 1 || loading}
+          onClick={() => setPage(page - 1)}
+        >
+          ← 前一页
+        </button>
+        <span>
+          {total ? page : 0} / {pages} 页
+        </span>
+        <button
+          disabled={page >= pages || loading}
+          onClick={() => setPage(page + 1)}
+        >
+          后一页 →
+        </button>
+      </div>
+      {index !== null && (
+        <Lightbox
+          items={media}
+          currentIndex={index}
+          onClose={() => setIndex(null)}
+          onNavigate={setIndex}
+        />
+      )}
+      {showUpload && (
+        <div
+          className="fixed inset-0 bg-black/60 flex items-center justify-center z-[60] p-4"
+          onClick={() => {
+            if (!uploading) setShowUpload(false)
+          }}
+        >
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-label="上传影像"
+            className="bg-white border border-gray-300 p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto"
+            onClick={(event) => event.stopPropagation()}
           >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-white rounded-2xl p-6 w-full max-w-md"
-              onClick={(e) => e.stopPropagation()}
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold">新的回忆，入册。</h2>
+              <button
+                disabled={uploading}
+                onClick={() => setShowUpload(false)}
+                aria-label="关闭上传"
+              >
+                <X />
+              </button>
+            </div>
+            <fieldset disabled={uploading} className="space-y-4">
+              <label className="block text-sm">
+                属于谁
+                <select
+                  value={selectedCat}
+                  onChange={(e) => setSelectedCat(e.target.value)}
+                  className="block w-full p-3 border mt-2"
+                >
+                  <option value="">共同的日常 / 不关联</option>
+                  {cats.map((cat) => (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="block text-sm">
+                记一句话
+                <input
+                  value={description}
+                  maxLength={2000}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="比如：下午三点，晒太阳的专业选手。"
+                  className="block w-full p-3 border mt-2"
+                />
+              </label>
+            </fieldset>
+            <div
+              className={
+                'mt-5 p-8 text-center border-2 border-dashed ' +
+                (dragging ? 'bg-green-50 border-green-700' : 'border-gray-300')
+              }
+              onDragOver={(e) => {
+                e.preventDefault()
+                if (!uploading) setDragging(true)
+              }}
+              onDragLeave={() => setDragging(false)}
+              onDrop={(e) => {
+                e.preventDefault()
+                setDragging(false)
+                handleUpload(e.dataTransfer.files)
+              }}
             >
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-serif font-bold">上传媒体</h2>
-                <button
-                  onClick={() => setShowUploadModal(false)}
-                  className="p-2 hover:bg-gray-100 rounded-lg"
-                >
-                  <X className="w-5 h-5" />
-                </button>
+              <Upload className="mx-auto mb-3" />
+              <p className="text-sm mb-3">拖进来，把这一刻留下。</p>
+              <button
+                className="ink-button"
+                disabled={uploading}
+                onClick={() => input.current?.click()}
+              >
+                选择照片 / 视频
+              </button>
+              <input
+                ref={input}
+                type="file"
+                multiple
+                disabled={uploading}
+                accept=".jpg,.jpeg,.png,.gif,.webp,.mp4,.webm,.mov"
+                className="hidden"
+                onChange={(e) => handleUpload(e.target.files)}
+              />
+              <p className="text-xs text-gray-500 mt-4">
+                单文件 ≤ {Math.round(maxFileSize / 1048576)} MB · 支持批量上传
+                <br />
+                推荐 MP4（H.264）视频，MOV 是否能播放取决于浏览器。
+              </p>
+            </div>
+            {uploading && (
+              <div role="status" className="status-banner">
+                <p className="truncate">{currentFile}</p>
+                <progress max="100" value={progress} className="w-full my-2" />
+                <p>
+                  {progress < 100
+                    ? '正在传输 ' + progress + '%'
+                    : '传输完成，正在确认原文件与索引保存…'}
+                </p>
               </div>
-
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    选择猫咪
-                  </label>
-                  <select
-                    value={selectedCat}
-                    onChange={(e) => setSelectedCat(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500"
+            )}
+            {results.length > 0 && (
+              <div aria-live="polite" className="mt-4 space-y-3">
+                {results.map((result, i) => (
+                  <div
+                    key={i}
+                    className={
+                      'p-3 text-xs border ' +
+                      (result.success
+                        ? 'bg-green-50 text-green-800'
+                        : 'bg-red-50 text-red-800')
+                    }
                   >
-                    <option value="">不关联</option>
-                    {cats.map((cat) => (
-                      <option key={cat.id} value={cat.id}>
-                        {cat.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    描述
-                  </label>
-                  <input
-                    type="text"
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500"
-                    placeholder="可选的描述"
-                  />
-                </div>
-
-                <div
-                  className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors ${
-                    dragActive
-                      ? 'border-primary-500 bg-primary-50'
-                      : 'border-gray-200 hover:border-gray-300'
-                  }`}
-                  onDragEnter={handleDrag}
-                  onDragLeave={handleDrag}
-                  onDragOver={handleDrag}
-                  onDrop={handleDrop}
-                >
-                  <Upload className="w-10 h-10 mx-auto mb-3 text-gray-400" />
-                  <p className="text-gray-600 mb-2">拖拽文件到这里</p>
-                  <p className="text-sm text-gray-400 mb-4">或者</p>
-                  <button
-                    onClick={() => fileInputRef.current?.click()}
-                    className="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors"
-                  >
-                    选择文件
-                  </button>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    multiple
-                    accept="image/*,video/*"
-                    className="hidden"
-                    onChange={(e) => e.target.files && handleUpload(e.target.files)}
-                  />
-                </div>
+                    <div className="flex gap-2 items-center">
+                      {result.success ? (
+                        <Check size={15} />
+                      ) : (
+                        <AlertCircle size={15} />
+                      )}
+                      <span className="truncate">{result.name}</span>
+                    </div>
+                    <p className="mt-2">{result.message}</p>
+                  </div>
+                ))}
               </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            )}
+            {!uploading && results.length > 0 && (
+              <button
+                className="ink-button mt-5 w-full"
+                onClick={() => setShowUpload(false)}
+              >
+                完成，返回收藏
+              </button>
+            )}
+          </section>
+        </div>
+      )}
     </div>
   )
 }

@@ -1,5 +1,7 @@
 'use client'
 
+import { apiFetch } from '@/lib/urls'
+
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
@@ -22,7 +24,7 @@ export default function DiaryPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetch('/api/diary?pageSize=20')
+    apiFetch('/api/diary?pageSize=20')
       .then((res) => res.json())
       .then((data) => {
         if (data.success) setDiary(data.data.items)
@@ -49,14 +51,17 @@ export default function DiaryPage() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-12"
+          className="collection-heading"
         >
-          <h1 className="text-4xl md:text-5xl font-serif font-bold mb-4">
-            小猫日记
-          </h1>
-          <p className="text-gray-500 text-lg">
-            记录多多和毛毛的日常趣事和成长点滴
-          </p>
+          <div>
+            <span className="eyebrow">NOTES TO KEEP / 私人手记</span>
+            <h1 className="text-4xl md:text-5xl font-serif font-bold mb-4">
+              铲屎官的碎碎念
+            </h1>
+            <p className="text-gray-500 text-lg">
+              不是什么大事，但想一直记得。
+            </p>
+          </div>
         </motion.div>
 
         {diary.length === 0 ? (
@@ -74,7 +79,7 @@ export default function DiaryPage() {
                 transition={{ delay: index * 0.1 }}
               >
                 <Link href={`/diary/${item.id}`}>
-                  <div className="group bg-white rounded-3xl p-8 shadow-md card-hover">
+                  <div className="note-card group">
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex items-center gap-3">
                         <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary-100 to-secondary-100 flex items-center justify-center">
@@ -85,7 +90,9 @@ export default function DiaryPage() {
                             {item.title}
                           </h2>
                           {item.cat && (
-                            <p className="text-sm text-gray-400">{item.cat.name}的日记</p>
+                            <p className="text-sm text-gray-400">
+                              {item.cat.name}的日记
+                            </p>
                           )}
                         </div>
                       </div>
@@ -103,11 +110,14 @@ export default function DiaryPage() {
                         <div className="flex items-center gap-1">
                           <Calendar className="w-4 h-4" />
                           <span>
-                            {new Date(item.createdAt).toLocaleDateString('zh-CN', {
-                              year: 'numeric',
-                              month: 'long',
-                              day: 'numeric',
-                            })}
+                            {new Date(item.createdAt).toLocaleDateString(
+                              'zh-CN',
+                              {
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric',
+                              }
+                            )}
                           </span>
                         </div>
                         {item.weather && (

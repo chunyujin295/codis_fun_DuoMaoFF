@@ -1,9 +1,11 @@
 'use client'
 
+import { apiFetch } from '@/lib/urls'
+
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
-import { Image, BookOpen, Cat, TrendingUp } from 'lucide-react'
+import { Image as ImageIcon, BookOpen, Cat, TrendingUp } from 'lucide-react'
 
 interface Stats {
   mediaCount: number
@@ -12,14 +14,18 @@ interface Stats {
 }
 
 export default function AdminDashboard() {
-  const [stats, setStats] = useState<Stats>({ mediaCount: 0, diaryCount: 0, catCount: 0 })
+  const [stats, setStats] = useState<Stats>({
+    mediaCount: 0,
+    diaryCount: 0,
+    catCount: 0,
+  })
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     Promise.all([
-      fetch('/api/media?pageSize=1').then((res) => res.json()),
-      fetch('/api/diary?pageSize=1').then((res) => res.json()),
-      fetch('/api/cats').then((res) => res.json()),
+      apiFetch('/api/media?pageSize=1').then((res) => res.json()),
+      apiFetch('/api/diary?pageSize=1').then((res) => res.json()),
+      apiFetch('/api/cats').then((res) => res.json()),
     ]).then(([mediaRes, diaryRes, catsRes]) => {
       setStats({
         mediaCount: mediaRes.data?.total || 0,
@@ -31,9 +37,27 @@ export default function AdminDashboard() {
   }, [])
 
   const statCards = [
-    { label: '照片/视频', value: stats.mediaCount, icon: Image, color: 'primary', href: '/admin/media' },
-    { label: '日记', value: stats.diaryCount, icon: BookOpen, color: 'secondary', href: '/admin/diary' },
-    { label: '猫咪', value: stats.catCount, icon: Cat, color: 'accent', href: '/admin' },
+    {
+      label: '照片/视频',
+      value: stats.mediaCount,
+      icon: ImageIcon,
+      color: 'primary',
+      href: '/admin/media',
+    },
+    {
+      label: '日记',
+      value: stats.diaryCount,
+      icon: BookOpen,
+      color: 'secondary',
+      href: '/admin/diary',
+    },
+    {
+      label: '猫咪',
+      value: stats.catCount,
+      icon: Cat,
+      color: 'accent',
+      href: '/admin',
+    },
   ]
 
   if (loading) {
@@ -73,7 +97,9 @@ export default function AdminDashboard() {
                       <p className="text-gray-500 text-sm">{card.label}</p>
                       <p className="text-3xl font-bold mt-1">{card.value}</p>
                     </div>
-                    <div className={`w-12 h-12 rounded-xl bg-${card.color}-50 flex items-center justify-center`}>
+                    <div
+                      className={`w-12 h-12 rounded-xl bg-${card.color}-50 flex items-center justify-center`}
+                    >
                       <card.icon className={`w-6 h-6 text-${card.color}-500`} />
                     </div>
                   </div>
@@ -92,7 +118,7 @@ export default function AdminDashboard() {
               className="flex items-center gap-4 p-4 border border-gray-100 rounded-xl hover:bg-gray-50 transition-colors"
             >
               <div className="w-10 h-10 rounded-lg bg-primary-50 flex items-center justify-center">
-                <Image className="w-5 h-5 text-primary-500" />
+                <ImageIcon className="w-5 h-5 text-primary-500" />
               </div>
               <div>
                 <p className="font-medium">上传照片/视频</p>

@@ -27,7 +27,7 @@ export default function AdminLayout({
   return (
     <div className="min-h-screen bg-gray-100">
       {/* Sidebar */}
-      <aside className="fixed inset-y-0 left-0 w-64 bg-white border-r border-gray-200 z-50">
+      <aside className="admin-sidebar fixed inset-y-0 left-0 w-64 bg-white border-r border-gray-200 z-50">
         <div className="flex flex-col h-full">
           {/* Logo */}
           <div className="flex items-center gap-2 px-6 py-5 border-b border-gray-100">
@@ -38,7 +38,9 @@ export default function AdminLayout({
               height={32}
               priority
             />
-            <span className="text-xl font-serif font-bold gradient-text">管理后台</span>
+            <span className="text-xl font-serif font-bold gradient-text">
+              管理后台
+            </span>
           </div>
 
           {/* Navigation */}
@@ -63,7 +65,7 @@ export default function AdminLayout({
           </nav>
 
           {/* Footer */}
-          <div className="px-4 py-4 border-t border-gray-100">
+          <div className="admin-links-bottom px-4 py-4 border-t border-gray-100">
             <Link
               href="/"
               className="flex items-center gap-2 px-4 py-2 text-gray-500 hover:text-gray-700 text-sm mb-2"
@@ -71,7 +73,7 @@ export default function AdminLayout({
               <span>返回网站</span>
             </Link>
             <button
-              onClick={() => signOut({ callbackUrl: '/admin/login' })}
+              onClick={() => signOut({ callbackUrl: '/DuoMaoFF/admin/login' })}
               className="flex items-center gap-2 px-4 py-2 text-gray-500 hover:text-red-500 text-sm w-full"
             >
               <LogOut className="w-4 h-4" />
@@ -82,9 +84,7 @@ export default function AdminLayout({
       </aside>
 
       {/* Main content */}
-      <main className="ml-64 p-8">
-        {children}
-      </main>
+      <main className="admin-content ml-64 p-8">{children}</main>
     </div>
   )
 }

@@ -1,5 +1,8 @@
 'use client'
 
+import { apiFetch } from '@/lib/urls'
+import { MediaPreview } from '@/components/album/MediaPreview'
+
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
@@ -25,12 +28,16 @@ interface DiaryDetail {
   createdAt: string
 }
 
-export default function DiaryDetailPage({ params }: { params: { id: string } }) {
+export default function DiaryDetailPage({
+  params,
+}: {
+  params: { id: string }
+}) {
   const [diary, setDiary] = useState<DiaryDetail | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetch(`/api/diary/${params.id}`)
+    apiFetch(`/api/diary/${params.id}`)
       .then((res) => res.json())
       .then((data) => {
         if (data.success) setDiary(data.data)
@@ -117,7 +124,9 @@ export default function DiaryDetailPage({ params }: { params: { id: string } }) 
             </div>
             <div className="flex items-center gap-2">
               {diary.mood && <span className="text-4xl">{diary.mood}</span>}
-              {diary.weather && <span className="text-2xl">{diary.weather}</span>}
+              {diary.weather && (
+                <span className="text-2xl">{diary.weather}</span>
+              )}
             </div>
           </div>
 
@@ -140,11 +149,7 @@ export default function DiaryDetailPage({ params }: { params: { id: string } }) 
                     key={item.media.id}
                     className="aspect-square bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl flex items-center justify-center"
                   >
-                    {item.media.type === 'video' ? (
-                      <Video className="w-8 h-8 text-gray-400" />
-                    ) : (
-                      <Image className="w-8 h-8 text-gray-400" />
-                    )}
+                    <MediaPreview item={item.media} full />
                   </div>
                 ))}
               </div>

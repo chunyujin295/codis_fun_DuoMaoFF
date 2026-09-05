@@ -1,8 +1,18 @@
 'use client'
 
+import { apiFetch } from '@/lib/urls'
+import { MediaPreview } from '@/components/album/MediaPreview'
+
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Clock, Image, Video, BookOpen, ChevronDown, ChevronUp } from 'lucide-react'
+import {
+  Clock,
+  Image as ImageIcon,
+  Video,
+  BookOpen,
+  ChevronDown,
+  ChevronUp,
+} from 'lucide-react'
 
 interface TimelineItem {
   id: string
@@ -35,7 +45,7 @@ export default function TimelinePage() {
       ? `/api/timeline?year=${selectedYear}`
       : '/api/timeline'
 
-    fetch(url)
+    apiFetch(url)
       .then((res) => res.json())
       .then((data) => {
         if (data.success) {
@@ -44,6 +54,7 @@ export default function TimelinePage() {
         }
         setLoading(false)
       })
+      .catch(() => setLoading(false))
   }, [selectedYear])
 
   const toggleGroup = (key: string) => {
@@ -77,14 +88,17 @@ export default function TimelinePage() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-12"
+          className="collection-heading"
         >
-          <h1 className="text-4xl md:text-5xl font-serif font-bold mb-4">
-            成长时间线
-          </h1>
-          <p className="text-gray-500 text-lg">
-            记录多多和毛毛的每一个成长瞬间
-          </p>
+          <div>
+            <span className="eyebrow">GROWING TOGETHER / 时间标本</span>
+            <h1 className="text-4xl md:text-5xl font-serif font-bold mb-4">
+              就这样，慢慢长大
+            </h1>
+            <p className="text-gray-500 text-lg">
+              时间走得很快，好在这些瞬间都留下了。
+            </p>
+          </div>
         </motion.div>
 
         {/* Year filter */}
@@ -150,7 +164,9 @@ export default function TimelinePage() {
                   {/* Group header */}
                   <div
                     className={`flex items-center cursor-pointer ${
-                      groupIndex % 2 === 0 ? 'md:justify-start' : 'md:justify-end'
+                      groupIndex % 2 === 0
+                        ? 'md:justify-start'
+                        : 'md:justify-end'
                     } ml-16 md:ml-0`}
                     onClick={() => toggleGroup(groupKey)}
                   >
@@ -159,8 +175,12 @@ export default function TimelinePage() {
                         groupIndex % 2 === 0 ? 'md:mr-8' : 'md:ml-8'
                       }`}
                     >
-                      <span className="font-serif font-bold text-lg">{group.label}</span>
-                      <span className="text-sm text-gray-400">({group.items.length})</span>
+                      <span className="font-serif font-bold text-lg">
+                        {group.label}
+                      </span>
+                      <span className="text-sm text-gray-400">
+                        ({group.items.length})
+                      </span>
                       {isExpanded ? (
                         <ChevronUp className="w-5 h-5 text-gray-400" />
                       ) : (
@@ -187,13 +207,25 @@ export default function TimelinePage() {
                             transition={{ delay: itemIndex * 0.05 }}
                             className="bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow"
                           >
+                            {item.timelineType === 'media' && item.filePath && (
+                              <div className="aspect-video mb-4 overflow-hidden">
+                                <MediaPreview
+                                  item={{
+                                    id: item.id,
+                                    filePath: item.filePath,
+                                    type: item.type || 'image',
+                                  }}
+                                  full={item.type === 'video'}
+                                />
+                              </div>
+                            )}
                             <div className="flex items-start gap-3">
                               <div className="flex-shrink-0 w-10 h-10 rounded-full bg-primary-50 flex items-center justify-center">
                                 {item.timelineType === 'media' ? (
                                   item.type === 'video' ? (
                                     <Video className="w-5 h-5 text-primary-500" />
                                   ) : (
-                                    <Image className="w-5 h-5 text-primary-500" />
+                                    <ImageIcon className="w-5 h-5 text-primary-500" />
                                   )
                                 ) : (
                                   <BookOpen className="w-5 h-5 text-primary-500" />
@@ -205,13 +237,15 @@ export default function TimelinePage() {
                                     {item.timelineType === 'diary'
                                       ? item.title
                                       : item.type === 'video'
-                                      ? '视频'
-                                      : '照片'}
+                                        ? '视频'
+                                        : '照片'}
                                   </span>
                                   {item.mood && <span>{item.mood}</span>}
                                 </div>
                                 {item.cat && (
-                                  <p className="text-xs text-gray-400 mt-1">{item.cat.name}</p>
+                                  <p className="text-xs text-gray-400 mt-1">
+                                    {item.cat.name}
+                                  </p>
                                 )}
                                 {item.content && (
                                   <p className="text-sm text-gray-500 mt-1 line-clamp-2">
@@ -219,7 +253,9 @@ export default function TimelinePage() {
                                   </p>
                                 )}
                                 <p className="text-xs text-gray-400 mt-2">
-                                  {new Date(item.timelineDate).toLocaleDateString('zh-CN')}
+                                  {new Date(
+                                    item.timelineDate
+                                  ).toLocaleDateString('zh-CN')}
                                 </p>
                               </div>
                             </div>

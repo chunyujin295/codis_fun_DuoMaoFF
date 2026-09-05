@@ -1,98 +1,98 @@
 'use client'
-
-import { motion } from 'framer-motion'
-import Link from 'next/link'
+import { useState } from 'react'
 import Image from 'next/image'
-import { ArrowRight } from 'lucide-react'
+import Link from 'next/link'
+import { ArrowDownRight, ArrowUpRight } from 'lucide-react'
+import { CatPortrait } from '@/components/album/CatPortrait'
+import { MediaPreview, AlbumMedia } from '@/components/album/MediaPreview'
+import { siteUrl } from '@/lib/urls'
 
-export function HeroSection() {
+export function HeroSection({ media = [] }: { media?: AlbumMedia[] }) {
+  const [stamped, setStamped] = useState(false)
+  const photos = media.filter((item) => item.type === 'image')
   return (
-    <section className="relative min-h-[80vh] flex items-center justify-center overflow-hidden bg-gradient-to-br from-primary-50 via-white to-secondary-50">
-      {/* Background decorative elements */}
-      <div className="absolute inset-0 overflow-hidden">
-        <motion.div
-          className="absolute -top-20 -right-20 w-64 h-64 bg-primary-100 rounded-full opacity-50"
-          animate={{
-            scale: [1, 1.1, 1],
-            rotate: [0, 5, 0],
-          }}
-          transition={{ duration: 8, repeat: Infinity }}
-        />
-        <motion.div
-          className="absolute -bottom-32 -left-32 w-96 h-96 bg-secondary-100 rounded-full opacity-50"
-          animate={{
-            scale: [1, 1.05, 1],
-            rotate: [0, -5, 0],
-          }}
-          transition={{ duration: 10, repeat: Infinity }}
-        />
-        <motion.div
-          className="absolute top-1/4 left-1/4 w-32 h-32 bg-accent-100 rounded-full opacity-40"
-          animate={{
-            y: [0, -20, 0],
-          }}
-          transition={{ duration: 6, repeat: Infinity }}
-        />
+    <section className="scrapbook-hero">
+      <div className="hero-topline">
+        <span>一份持续更新的 / 猫咪生活样本</span>
+        <span>PRIVATE COLLECTION · VOL. 01</span>
       </div>
-
-      <div className="relative z-10 text-center px-4 max-w-4xl mx-auto">
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-        >
-          <Image
-            src="/DuoMaoFF/doc/img/icon.png"
-            alt="多毛记 Logo"
-            width={80}
-            height={80}
-            className="mx-auto mb-6"
-            priority
-          />
-          <h1 className="text-5xl md:text-7xl font-serif font-bold mb-6">
-            <span className="gradient-text">多毛记</span>
-          </h1>
-          <p className="text-xl md:text-2xl text-gray-600 mb-8 font-light">
-            记录<span className="font-semibold text-primary-500">多多</span>和
-            <span className="font-semibold text-secondary-500">毛毛</span>的每一个美好瞬间
-          </p>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.3 }}
-          className="flex flex-col sm:flex-row gap-4 justify-center"
-        >
-          <Link
-            href="/gallery"
-            className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-primary-500 text-white rounded-full font-medium hover:bg-primary-600 transition-colors shadow-lg hover:shadow-xl"
-          >
-            浏览相册
-            <ArrowRight className="w-5 h-5" />
-          </Link>
-          <Link
-            href="/cats"
-            className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white text-gray-700 rounded-full font-medium hover:bg-gray-50 transition-colors border border-gray-200"
-          >
-            认识它们
-          </Link>
-        </motion.div>
-
-        {/* Scroll indicator */}
-        <motion.div
-          className="absolute bottom-8 left-1/2 transform -translate-x-1/2"
-          animate={{ y: [0, 10, 0] }}
-          transition={{ duration: 2, repeat: Infinity }}
-        >
-          <div className="w-6 h-10 border-2 border-gray-300 rounded-full flex justify-center pt-2">
-            <motion.div
-              className="w-1.5 h-1.5 bg-gray-400 rounded-full"
-              animate={{ y: [0, 12, 0] }}
-              transition={{ duration: 2, repeat: Infinity }}
-            />
+      <div className="hero-layout">
+        <div className="hero-copy">
+          <div className="eyebrow">
+            <i /> HELLO, THIS IS OUR LITTLE WORLD.
           </div>
-        </motion.div>
+          <h1>
+            日子很小，
+            <br />
+            <span className="hero-emphasis">有你们</span>
+            <br />
+            就好<span className="hero-period">。</span>
+          </h1>
+          <p className="hero-description">
+            多多、毛毛，和一些舍不得删掉的瞬间。
+            <br />
+            把普通的一天，认真收藏起来。
+          </p>
+          <Link className="ink-button" href="/gallery">
+            翻开我们的收藏册 <ArrowUpRight size={20} />
+          </Link>
+          <span className="handwritten hero-note">有猫的日子，值得存档 ↗</span>
+        </div>
+        <div className="hero-collage">
+          <span className="collage-grid" aria-hidden="true" />
+          <div className="polaroid polaroid-back">
+            <div className="tape" aria-hidden="true" />
+            {photos[1] ? (
+              <MediaPreview item={photos[1]} />
+            ) : (
+              <CatPortrait variant={1} name="毛毛" />
+            )}
+            <p>
+              {photos[1]?.description || '毛毛 / 慢一点也没关系'}{' '}
+              <span>02</span>
+            </p>
+          </div>
+          <div className="polaroid polaroid-front">
+            <div className="tape" aria-hidden="true" />
+            {photos[0] ? (
+              <MediaPreview item={photos[0]} />
+            ) : (
+              <CatPortrait name="多多" />
+            )}
+            <p>
+              {photos[0]?.description || '多多 / 今天也有好好晒太阳'}{' '}
+              <span>01</span>
+            </p>
+          </div>
+          <span className="lime-sticker">
+            本册含有
+            <br />
+            <strong>大量猫毛</strong>
+            <small>100% FUR REAL</small>
+          </span>
+          <button
+            className={'paw-stamp ' + (stamped ? 'is-stamped' : '')}
+            onClick={() => setStamped(!stamped)}
+            aria-pressed={stamped}
+            aria-label="盖一个猫爪印章"
+          >
+            <Image
+              src={siteUrl('/doc/img/icon.png')}
+              alt=""
+              width={78}
+              height={78}
+            />
+            <span>{stamped ? '已盖爪，喵！' : '按一下，盖个爪'}</span>
+          </button>
+          <span className="handwritten collage-note">
+            都是我的宝贝。
+            <ArrowDownRight size={42} strokeWidth={1} />
+          </span>
+        </div>
+      </div>
+      <div className="hero-bottomline">
+        <span>两只猫 · 一个家 · 数不清的小事</span>
+        <a href="#residents">向下翻一页 ↓</a>
       </div>
     </section>
   )

@@ -1,5 +1,7 @@
 'use client'
 
+import { apiFetch } from '@/lib/urls'
+
 import { useEffect, useState } from 'react'
 import { HeroSection } from '@/components/home/HeroSection'
 import { FeaturedCats } from '@/components/home/FeaturedCats'
@@ -35,6 +37,7 @@ interface Diary {
 }
 
 export default function HomePage() {
+  const [error, setError] = useState('')
   const [cats, setCats] = useState<Cat[]>([])
   const [media, setMedia] = useState<Media[]>([])
   const [diary, setDiary] = useState<Diary[]>([])
@@ -42,19 +45,26 @@ export default function HomePage() {
   useEffect(() => {
     // Fetch data
     Promise.all([
-      fetch('/api/cats').then((res) => res.json()),
-      fetch('/api/media?pageSize=8').then((res) => res.json()),
-      fetch('/api/diary?pageSize=3').then((res) => res.json()),
-    ]).then(([catsRes, mediaRes, diaryRes]) => {
-      if (catsRes.success) setCats(catsRes.data)
-      if (mediaRes.success) setMedia(mediaRes.data.items)
-      if (diaryRes.success) setDiary(diaryRes.data.items)
-    })
+      apiFetch('/api/cats').then((res) => res.json()),
+      apiFetch('/api/media?pageSize=8').then((res) => res.json()),
+      apiFetch('/api/diary?pageSize=3').then((res) => res.json()),
+    ])
+      .then(([catsRes, mediaRes, diaryRes]) => {
+        if (catsRes.success) setCats(catsRes.data)
+        if (mediaRes.success) setMedia(mediaRes.data.items)
+        if (diaryRes.success) setDiary(diaryRes.data.items)
+      })
+      .catch(() => setError('暂时无法读取收藏，请稍后刷新。'))
   }, [])
 
   return (
     <div>
-      <HeroSection />
+      <HeroSection media={media} />
+      {error && (
+        <div className="error-banner mx-[5%]" role="alert">
+          {error}
+        </div>
+      )}
       <FeaturedCats cats={cats} />
       <LatestMedia media={media} />
       <LatestDiary diary={diary} />

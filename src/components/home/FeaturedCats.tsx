@@ -1,9 +1,8 @@
 'use client'
-
-import { motion } from 'framer-motion'
 import Link from 'next/link'
-import { Cat, Heart, Sparkles } from 'lucide-react'
-
+import { ArrowUpRight } from 'lucide-react'
+import { CatPortrait } from '@/components/album/CatPortrait'
+import { siteUrl } from '@/lib/urls'
 interface CatCardProps {
   id: string
   name: string
@@ -12,76 +11,63 @@ interface CatCardProps {
   color?: string | null
   avatar?: string | null
 }
-
 export function FeaturedCats({ cats }: { cats: CatCardProps[] }) {
   return (
-    <section className="py-20 px-4">
-      <div className="max-w-6xl mx-auto">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="text-center mb-12"
-        >
-          <h2 className="text-3xl md:text-4xl font-serif font-bold mb-4">
-            认识我们的小天使
+    <section className="album-section" id="residents">
+      <div className="section-heading">
+        <div>
+          <span className="eyebrow">01 / THE RESIDENTS</span>
+          <h2>
+            本册常驻嘉宾<span className="handwritten">是家人呀。</span>
           </h2>
-          <p className="text-gray-500 max-w-2xl mx-auto">
-            两只性格迥异却同样可爱的小猫，用它们的方式温暖着我们的生活
-          </p>
-        </motion.div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        </div>
+        <Link href="/cats">
+          认识它们 <ArrowUpRight size={17} />
+        </Link>
+      </div>
+      {cats.length === 0 ? (
+        <div className="paper-empty">
+          两位主角的档案，等你慢慢写下。<Link href="/admin">去整理档案 ↗</Link>
+        </div>
+      ) : (
+        <div className="resident-grid">
           {cats.map((cat, index) => (
-            <motion.div
+            <Link
+              href={'/cats/' + cat.id}
+              className={'resident-card resident-' + (index % 2)}
               key={cat.id}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: index * 0.2 }}
             >
-              <Link href={`/cats/${cat.id}`}>
-                <div className="group relative bg-white rounded-3xl overflow-hidden shadow-lg card-hover">
-                  {/* Avatar placeholder with gradient */}
-                  <div className="relative h-64 bg-gradient-to-br from-primary-100 to-secondary-100 flex items-center justify-center">
-                    <Cat className="w-32 h-32 text-primary-300 group-hover:scale-110 transition-transform duration-300" />
-                    <div className="absolute top-4 right-4">
-                      <Heart className="w-6 h-6 text-primary-400 fill-primary-400 opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </div>
-                  </div>
-
-                  <div className="p-6">
-                    <div className="flex items-center gap-2 mb-2">
-                      <h3 className="text-2xl font-serif font-bold">{cat.name}</h3>
-                      {cat.color && (
-                        <span className="px-3 py-1 bg-primary-50 text-primary-600 text-xs rounded-full">
-                          {cat.color}
-                        </span>
-                      )}
-                    </div>
-                    
-                    {cat.personality && (
-                      <div className="flex items-center gap-2 mb-3 text-sm text-gray-500">
-                        <Sparkles className="w-4 h-4 text-accent-500" />
-                        <span>{cat.personality}</span>
-                      </div>
-                    )}
-
-                    {cat.description && (
-                      <p className="text-gray-600 line-clamp-2">{cat.description}</p>
-                    )}
-
-                    <div className="mt-4 flex items-center text-primary-500 font-medium group-hover:gap-3 gap-2 transition-all">
-                      <span>了解更多</span>
-                      <span className="group-hover:translate-x-1 transition-transform">→</span>
-                    </div>
-                  </div>
-                </div>
-              </Link>
-            </motion.div>
+              <div className="resident-image">
+                {cat.avatar ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={siteUrl(cat.avatar)}
+                    alt={cat.name}
+                    loading="lazy"
+                    className="media-cover"
+                  />
+                ) : (
+                  <CatPortrait name={cat.name} variant={index} />
+                )}
+              </div>
+              <div className="resident-copy">
+                <span className="eyebrow">
+                  RESIDENT / {String(index + 1).padStart(2, '0')}
+                </span>
+                <h3>
+                  {cat.name}
+                  <ArrowUpRight />
+                </h3>
+                <span className="tiny-tag">{cat.color || '家庭成员'}</span>
+                <p>{cat.description || '关于它的故事，还在一天天变多。'}</p>
+                <span className="resident-personality">
+                  {cat.personality || '独一无二，可爱本人'}
+                </span>
+              </div>
+            </Link>
           ))}
         </div>
-      </div>
+      )}
     </section>
   )
 }
