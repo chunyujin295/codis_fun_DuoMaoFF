@@ -1,0 +1,70 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  username  String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Cat {
+  id          String   @id @default(cuid())
+  name        String
+  birthday    DateTime?
+  description String?
+  personality String?
+  avatar      String?
+  color       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  media       Media[]
+  diary       Diary[]
+}
+
+model Media {
+  id            String   @id @default(cuid())
+  filename      String
+  originalName  String
+  filePath      String
+  thumbnailPath String?
+  type          String
+  description   String?
+  dateTaken     DateTime?
+  exifData      String?
+  catId         String?
+  cat           Cat?     @relation(fields: [catId], references: [id])
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  diaryMedia    DiaryMedia[]
+}
+
+model Diary {
+  id        String   @id @default(cuid())
+  title     String
+  content   String
+  mood      String?
+  weather   String?
+  catId     String?
+  cat       Cat?     @relation(fields: [catId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  media     DiaryMedia[]
+}
+
+model DiaryMedia {
+  id      String @id @default(cuid())
+  diaryId String
+  mediaId String
+  diary   Diary  @relation(fields: [diaryId], references: [id], onDelete: Cascade)
+  media   Media  @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  @@unique([diaryId, mediaId])
+}
